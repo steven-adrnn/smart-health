@@ -1,15 +1,23 @@
-import NextAuth from 'next-auth'
+import NextAuth, { DefaultSession, Session, User } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
-import FacebookProvider from 'next-auth/providers/facebook'
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter'
+import { MongoDBAdapter } from '@auth/mongodb-adapter'
 import clientPromise from '../../../lib/mongodb'
+
+// 1. Definisikan interface untuk memperluas DefaultSession
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+    } & DefaultSession["user"]
+  }
+}
 
 export default NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_ID,
-      clientSecret: process.env.GOOGLE_SECRET,
+      clientId: process.env.GOOGLE_ID as string,
+      clientSecret: process.env.GOOGLE_SECRET as string,
     })
   ],
   pages: {
@@ -17,9 +25,10 @@ export default NextAuth({
   },
   callbacks: {
     async session({ session, user }) {
-      session.user.id = user.id
-      return session
-    },
+      if (session.user) {
+        session.user.id = user.id;
+      }
+      return session;
+    }
   },
 })
-

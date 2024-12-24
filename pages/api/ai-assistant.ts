@@ -1,10 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { Configuration, OpenAIApi } from 'openai'
 
+
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
-})
-const openai = new OpenAIApi(configuration)
+});
+
+const openai = new OpenAIApi(configuration);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -23,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       temperature: 0.8,
     })
 
-    const suggestion = response.data.choices[0].text.trim()
+    const suggestion = response.data?.choices[0]?.text?.trim()
     res.status(200).json({ suggestion })
   } catch (error) {
     console.error('Error in AI assistant:', error)

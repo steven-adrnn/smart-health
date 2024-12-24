@@ -13,7 +13,7 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ productCount, orderCount, userCount }) => {
   const { data: session } = useSession()
 
-  if (!session || session.user.role !== 'admin') {
+  if (!session || !session.user || (session.user as any).role !== 'admin') {
     return <div>Access denied. You must be an admin to view this page.</div>
   }
 
