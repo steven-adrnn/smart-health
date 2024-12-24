@@ -1,23 +1,32 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 
-  // Add security headers
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
-  )
+  if (req.nextUrl.pathname.startsWith('/api/admin')) {
+    if (!token || token.role !== 'admin') {
+      return new NextResponse(
+        JSON.stringify({ success: false, message: 'authentication failed' }),
+        { status: 401, headers: { 'content-type': 'application/json' } }
+      )
+    }
+  }
 
-  return response
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ success: false, message: 'authentication failed' }),
+        { status: 401, headers: { 'content-type': 'application/json' } }
+      )
+    }
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  matcher: '/api/:path*',
 }
 
